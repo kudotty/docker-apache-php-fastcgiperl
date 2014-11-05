@@ -1,36 +1,52 @@
-FROM        ubuntu
+FROM        ubuntu:14.04
 MAINTAINER  Love Nyberg "love.nyberg@lovemusic.se"
  
 # Update apt sources
-RUN echo "deb http://archive.ubuntu.com/ubuntu precise main universe" > /etc/apt/sources.list
+RUN echo "deb http://jp.archive.ubuntu.com/ubuntu/ trusty main restricted" > /etc/apt/sources.list
+RUN echo "deb http://jp.archive.ubuntu.com/ubuntu/ trusty-updates main restricted" >> /etc/apt/sources.list
+RUN echo "deb http://jp.archive.ubuntu.com/ubuntu/ trusty universe" >> /etc/apt/sources.list
+RUN echo "deb http://jp.archive.ubuntu.com/ubuntu/ trusty-updates universe" >> /etc/apt/sources.list
+RUN echo "deb http://jp.archive.ubuntu.com/ubuntu/ trusty multiverse" >> /etc/apt/sources.list
+RUN echo "deb http://jp.archive.ubuntu.com/ubuntu/ trusty-updates multiverse" >> /etc/apt/sources.list
+RUN echo "deb http://jp.archive.ubuntu.com/ubuntu/ trusty-backports main restricted universe multiverse" >> /etc/apt/sources.list
+RUN echo "deb http://security.ubuntu.com/ubuntu trusty-security main restricted" >> /etc/apt/sources.list
+RUN echo "deb http://security.ubuntu.com/ubuntu trusty-security universe" >> /etc/apt/sources.list
+RUN echo "deb http://security.ubuntu.com/ubuntu trusty-security multiverse" >> /etc/apt/sources.list
 
 # Update the package repository
 RUN apt-get update; apt-get upgrade -y; apt-get install locales
 
 # Configure timezone and locale
-RUN echo "Europe/Stockholm" > /etc/timezone; dpkg-reconfigure -f noninteractive tzdata
+RUN echo "Asia/Tokyo" > /etc/timezone; dpkg-reconfigure -f noninteractive tzdata
 RUN export LANGUAGE=en_US.UTF-8; export LANG=en_US.UTF-8; export LC_ALL=en_US.UTF-8; locale-gen en_US.UTF-8; DEBIAN_FRONTEND=noninteractive dpkg-reconfigure locales
 
 # Install base system
-RUN DEBIAN_FRONTEND=noninteractive apt-get install -y wget curl python-software-properties
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y wget curl software-properties-common
 
 #Add PPA
-RUN add-apt-repository ppa:ondrej/php5
+##__ RUN add-apt-repository ppa:ondrej/php5
  
 # Install PHP 5.5
 # As well as curl, mcrypt, and mysqlnd.
-RUN apt-get update; apt-get install -y php5-cli php5 php5-mcrypt php5-curl php5-pgsql
+RUN apt-get update; apt-get install -y --force-yes php5-cli php5 php5-mcrypt php5-curl php5-pgsql php-mime-type
  
 # Let's set the default timezone in both cli and apache configs
-RUN sed -ie 's/\;date\.timezone\ \=/date\.timezone\ \=\ Europe\/Stockholm/g' /etc/php5/cli/php.ini
-RUN sed -ie 's/\;date\.timezone\ \=/date\.timezone\ \=\ Europe\/Stockholm/g' /etc/php5/apache2/php.ini
+##__ RUN sed -ie 's/\;date\.timezone\ \=/date\.timezone\ \=\ Asia\/Tokyo/g' /etc/php5/cli/php.ini
+##__ RUN sed -ie 's/\;date\.timezone\ \=/date\.timezone\ \=\ Asia\/Tokyo/g' /etc/php5/apache2/php.ini
 
 # Setup Composer
-RUN curl -sS https://getcomposer.org/installer | php; mv composer.phar /usr/local/bin/composer
+##__ RUN curl -sS https://getcomposer.org/installer | php; mv composer.phar /usr/local/bin/composer
 
 # Setup conf for Zend Framework
 RUN sed -ie 's/;include_path = ".:\/usr\/share\/php"/include_path = ".:\/var\/www\/library"/g' /etc/php5/cli/php.ini
 RUN sed -ie 's/\;include_path = ".:\/usr\/share\/php"/include_path = ".:\/var\/www\/library"/g' /etc/php5/apache2/php.ini
+
+##__ Install fastcgi & Advert Pro packages
+RUN apt-get install -y libapache2-mod-fastcgi libcgi-fast-perl libdbd-mysql-perl libwww-perl
+
+##__ Set fastcgi mime.type
+ADD ./mime.types /etc/
+
 # Activate a2enmod
 RUN a2enmod rewrite
 
